@@ -6,9 +6,13 @@
 #include <iomanip>
 #include <ctime>
 #include <sstream>
-#include <filesystem>
-
-namespace fs = std::filesystem;
+#ifdef _WIN32
+#include <direct.h>
+#define make_dir(path) _mkdir(path)
+#else
+#include <sys/stat.h>
+#define make_dir(path) mkdir(path, 0777)
+#endif
 
 void generateExpiredReport(const Inventory &inv)
 {
@@ -22,6 +26,7 @@ void generateExpiredReport(const Inventory &inv)
        << std::setfill('0') << std::setw(2) << tm_now->tm_hour << "-"
        << std::setfill('0') << std::setw(2) << tm_now->tm_min << "-"
        << std::setfill('0') << std::setw(2) << tm_now->tm_sec << ".txt";
+    make_dir("reports");
     std::string filename = "reports/" + ss.str();
 
     std::ofstream file(filename);
@@ -75,6 +80,7 @@ void generateLowStockReport(const Inventory &inv)
        << std::setfill('0') << std::setw(2) << tm_now->tm_hour << "-"
        << std::setfill('0') << std::setw(2) << tm_now->tm_min << "-"
        << std::setfill('0') << std::setw(2) << tm_now->tm_sec << ".txt";
+    make_dir("reports");
     std::string filename = "reports/" + ss.str();
 
     std::ofstream file(filename);

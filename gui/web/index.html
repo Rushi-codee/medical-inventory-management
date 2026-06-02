@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIMS - Medical Inventory System</title>
+    <!-- Tailwind CSS for modern layouts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#090D16',
+                        darkCard: '#131B2E',
+                        darkInput: '#1E293B',
+                        accentTeal: '#0D9488',
+                        accentTealHover: '#0F766E'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090D16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0D9488;
+        }
+        /* Keyframe animations for toasts and modals */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .toast-animate {
+            animation: slideIn 0.3s ease forwards;
+        }
+        .toast-fade-out {
+            animation: fadeOut 0.4s ease forwards;
+        }
+    </style>
+</head>
+<body class="h-full flex overflow-hidden">
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-[100] flex flex-col gap-3 w-80 pointer-events-none"></div>
+
+    <!-- LOGIN SCREEN MODAL OVERLAY -->
+    <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md">
+        <div class="w-full max-w-md bg-darkCard border border-slate-800 rounded-2xl shadow-2xl p-8 mx-4">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-500/10 text-teal-400 mb-4 border border-teal-500/20">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-extrabold text-white tracking-tight">ADMIN LOGIN</h2>
+                <p class="text-slate-400 text-sm mt-1">Medical Inventory Management System</p>
+            </div>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5" for="username">Username</label>
+                    <input type="text" id="username" required
+                           class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all font-medium">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5" for="password">Password</label>
+                    <input type="password" id="password" required
+                           class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all font-medium">
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-teal-900/30 hover:shadow-teal-900/40 transition-all">
+                    Sign In
+                </button>
+            </form>
+            <div id="loginStatus" class="mt-4 text-center text-rose-500 text-sm font-semibold h-5"></div>
+        </div>
+    </div>
+
+    <!-- REPORT VIEWING MODAL OVERLAY -->
+    <div id="reportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+        <div class="w-full max-w-4xl bg-darkCard border border-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center flex-shrink-0">
+                <h3 id="modalReportTitle" class="font-bold text-white tracking-wide">Report Contents</h3>
+                <button onclick="closeReportModal()" class="text-slate-400 hover:text-white transition-all">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex-1 p-6 overflow-auto bg-darkBg border-b border-slate-800">
+                <pre id="modalReportContent" class="code-font text-emerald-400 text-xs sm:text-sm whitespace-pre overflow-x-auto leading-relaxed"></pre>
+            </div>
+            <div class="px-6 py-4 flex justify-end flex-shrink-0">
+                <button onclick="closeReportModal()" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 px-6 rounded-xl transition-all">
+                    Close Preview
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP SCREEN (HIDDEN BY DEFAULT) -->
+    <div id="appContainer" class="hidden flex-1 flex overflow-hidden">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-64 bg-darkCard border-r border-slate-800 flex flex-col">
+            <!-- Brand -->
+            <div class="p-6 border-b border-slate-800 flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center text-slate-950 font-bold text-lg">M</div>
+                <div>
+                    <h1 class="text-sm font-extrabold text-white tracking-wide">MIMS PORTAL</h1>
+                    <span class="text-xs text-teal-400 font-semibold uppercase tracking-wider">v2.1 Stable</span>
+                </div>
+            </div>
+
+            <!-- Views Filter -->
+            <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
+                <span class="block px-3 text-2xs font-bold uppercase text-slate-500 tracking-widest mb-2">Inventory Views</span>
+                
+                <button onclick="setViewFilter('all')" id="viewBtn-all"
+                        class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-left text-sm font-semibold transition-all bg-teal-950/40 text-teal-400 border border-teal-500/20">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                    <span>All Medicines</span>
+                </button>
+
+                <button onclick="setViewFilter('lowStock')" id="viewBtn-lowStock"
+                        class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-left text-sm font-semibold transition-all hover:bg-slate-900 text-slate-400 hover:text-slate-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <span>Low Stock Alerts</span>
+                </button>
+
+                <button onclick="setViewFilter('expired')" id="viewBtn-expired"
+                        class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-left text-sm font-semibold transition-all hover:bg-slate-900 text-slate-400 hover:text-slate-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Expired Inventory</span>
+                </button>
+
+                <span class="block px-3 pt-6 text-2xs font-bold uppercase text-slate-500 tracking-widest mb-2">Report Directories</span>
+
+                <button onclick="setViewFilter('reports-expired')" id="viewBtn-reports-expired"
+                        class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-left text-sm font-semibold text-slate-400 hover:text-slate-100 hover:bg-slate-900 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>Expired Reports</span>
+                </button>
+
+                <button onclick="setViewFilter('reports-lowstock')" id="viewBtn-reports-lowstock"
+                        class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-left text-sm font-semibold text-slate-400 hover:text-slate-100 hover:bg-slate-900 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H3a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>Low Stock Reports</span>
+                </button>
+
+                <span class="block px-3 pt-6 text-2xs font-bold uppercase text-slate-500 tracking-widest mb-2">Automated Actions</span>
+
+                <button onclick="handleReportGeneration('generate_expired_report')"
+                        class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-left text-sm font-semibold text-slate-400 hover:text-indigo-400 hover:bg-indigo-950/20 border border-transparent hover:border-indigo-500/20 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span>Generate Expired Report</span>
+                </button>
+
+                <button onclick="handleReportGeneration('generate_low_stock_report')"
+                        class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-left text-sm font-semibold text-slate-400 hover:text-indigo-400 hover:bg-indigo-950/20 border border-transparent hover:border-indigo-500/20 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span>Generate Low Stock Report</span>
+                </button>
+
+                <button onclick="executeCommand(['remove_expired'], 'Expired inventory cleared')"
+                        class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-left text-sm font-semibold text-slate-400 hover:text-rose-400 hover:bg-rose-950/20 border border-transparent hover:border-rose-500/20 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    <span>Purge Expired</span>
+                </button>
+            </nav>
+
+            <!-- Bottom Exit -->
+            <div class="p-4 border-t border-slate-800">
+                <button onclick="handleExit()"
+                        class="w-full flex items-center justify-center space-x-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-rose-950/30 hover:bg-rose-900/40 text-rose-400 border border-rose-500/25 hover:border-rose-500/40 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span>Close Portal</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTENT WORKSPACE -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-darkBg">
+            
+            <!-- HEADER -->
+            <header class="h-16 bg-darkCard border-b border-slate-800 px-8 flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center space-x-3">
+                    <h2 class="text-lg font-bold text-white tracking-tight" id="dashboardTitle">Inventory Management Dashboard</h2>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-xs font-semibold text-emerald-400 bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-500/10">Active Session</span>
+                </div>
+                
+                <!-- Search bar -->
+                <div class="w-80 relative" id="searchBarContainer">
+                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Quick filter by medicine name..."
+                           class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-all">
+                    <div class="absolute left-3.5 top-2.5 text-slate-500">
+                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </header>
+
+            <!-- DASHBOARD DYNAMIC STAT CARDS -->
+            <section id="kpiSection" class="p-6 grid grid-cols-1 md:grid-cols-4 gap-4 flex-shrink-0">
+                <!-- Card 1 -->
+                <div class="bg-darkCard border border-slate-800 rounded-2xl p-5 flex items-center space-x-4">
+                    <div class="p-3 bg-teal-500/10 text-teal-400 rounded-xl border border-teal-500/20">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Medicines</p>
+                        <h3 class="text-2xl font-bold text-white mt-0.5" id="stat-total">0</h3>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="bg-darkCard border border-slate-800 rounded-2xl p-5 flex items-center space-x-4">
+                    <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Low Stock items</p>
+                        <h3 class="text-2xl font-bold text-white mt-0.5" id="stat-low">0</h3>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="bg-darkCard border border-slate-800 rounded-2xl p-5 flex items-center space-x-4">
+                    <div class="p-3 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Expired items</p>
+                        <h3 class="text-2xl font-bold text-white mt-0.5" id="stat-expired">0</h3>
+                    </div>
+                </div>
+                <!-- Card 4 -->
+                <div class="bg-darkCard border border-slate-800 rounded-2xl p-5 flex items-center space-x-4">
+                    <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Stock Valuation</p>
+                        <h3 class="text-2xl font-bold text-white mt-0.5" id="stat-valuation">$0.00</h3>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MAIN WORKSPACE LAYOUT CONTAINER -->
+            <section class="flex-1 p-6 pt-0 flex space-x-6 overflow-hidden">
+                
+                <!-- VIEW 1: DATA TABLE CONTAINER (STOCK DIRECTORY) -->
+                <div id="tableContainer" class="flex-1 bg-darkCard border border-slate-800 rounded-2xl flex flex-col overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center flex-shrink-0">
+                        <h3 class="font-bold text-white">Stock Directory</h3>
+                        <button onclick="fetchInventory()" class="text-xs bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-semibold px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5M7 8H5.5M4 9h5"></path>
+                            </svg>
+                            <span>Refresh Table</span>
+                        </button>
+                    </div>
+
+                    <!-- Scrollable Table -->
+                    <div class="flex-1 overflow-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-950/40 border-b border-slate-800/80 text-2xs font-bold uppercase tracking-widest text-slate-500">
+                                    <th class="py-4 px-6">Medicine Name</th>
+                                    <th class="py-4 px-6">Batch ID</th>
+                                    <th class="py-4 px-6">Expiry</th>
+                                    <th class="py-4 px-6 text-right">Qty</th>
+                                    <th class="py-4 px-6 text-right">Price</th>
+                                    <th class="py-4 px-6 text-right">Threshold</th>
+                                    <th class="py-4 px-6">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTableBody" class="divide-y divide-slate-900 text-sm font-medium text-slate-200">
+                                <!-- JS Populated Rows -->
+                            </tbody>
+                        </table>
+                        <div id="emptyTableState" class="hidden text-center py-20 text-slate-500 font-semibold">
+                            No medicines found in this inventory view filter.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW 2: REPORTS LIST DIRECTORY CONTAINER (HIDDEN BY DEFAULT) -->
+                <div id="reportsContainer" class="hidden flex-1 bg-darkCard border border-slate-800 rounded-2xl flex flex-col overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center flex-shrink-0">
+                        <h3 id="reportsDirectoryTitle" class="font-bold text-white tracking-wide">Generated Reports Log</h3>
+                        <button onclick="fetchReportsList()" class="text-xs bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-semibold px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5M7 8H5.5M4 9h5"></path>
+                            </svg>
+                            <span>Refresh List</span>
+                        </button>
+                    </div>
+
+                    <!-- Scrollable Reports List -->
+                    <div class="flex-1 overflow-auto p-6 space-y-3" id="reportsListBody">
+                        <!-- JS Populated list elements -->
+                    </div>
+                    <div id="emptyReportsState" class="hidden text-center py-24 text-slate-500 font-semibold flex-1">
+                        No generated reports found in this folder. Click "Generate Report" inside automated actions sidebar to create one.
+                    </div>
+                </div>
+
+                <!-- CONTEXT OPERATIONS PANEL (FORMS DRAWER) -->
+                <div id="operationsContainer" class="w-96 bg-darkCard border border-slate-800 rounded-2xl flex flex-col overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-800 flex-shrink-0">
+                        <h3 class="font-bold text-white">Console Operations</h3>
+                    </div>
+
+                    <!-- Tabs Header -->
+                    <div class="flex border-b border-slate-800 bg-slate-950/35 text-2xs font-bold uppercase tracking-wider text-slate-400 flex-shrink-0">
+                        <button onclick="setActionTab('add')" id="tabBtn-add" class="flex-1 py-3 text-center border-b-2 border-teal-500 text-teal-400 transition-all">Add</button>
+                        <button onclick="setActionTab('updateQty')" id="tabBtn-updateQty" class="flex-1 py-3 text-center border-b-2 border-transparent transition-all">Qty</button>
+                        <button onclick="setActionTab('updateExp')" id="tabBtn-updateExp" class="flex-1 py-3 text-center border-b-2 border-transparent transition-all">Expiry</button>
+                        <button onclick="setActionTab('delete')" id="tabBtn-delete" class="flex-1 py-3 text-center border-b-2 border-transparent transition-all">Delete</button>
+                    </div>
+
+                    <!-- Dynamic Input Cards -->
+                    <div class="flex-1 p-6 overflow-y-auto space-y-4">
+                        
+                        <!-- Common Fields -->
+                        <div>
+                            <label class="block text-2xs font-bold uppercase tracking-wider text-slate-400 mb-1" for="input-name">Medicine Name</label>
+                            <input type="text" id="input-name" placeholder="e.g. Paracetamol"
+                                   class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500 transition-all font-semibold">
+                        </div>
+
+                        <div id="group-batch">
+                            <label class="block text-2xs font-bold uppercase tracking-wider text-slate-400 mb-1" for="input-batch">Batch ID / Number</label>
+                            <input type="text" id="input-batch" placeholder="e.g. B123"
+                                   class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500 transition-all font-semibold">
+                        </div>
+
+                        <!-- Tab Specific Fields -->
+                        <!-- ADD MEDICINE FIELDS -->
+                        <div id="fields-add" class="space-y-4">
+                            <div>
+                                <label class="block text-2xs font-bold uppercase tracking-wider text-slate-400 mb-1" for="input-expiry">Expiry Date (YYYY-MM-DD)</label>
+                                <input type="text" id="input-expiry" placeholder="YYYY-MM-DD"
+                                       class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500 transition-all font-semibold">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-2xs font-bold uppercase tracking-wider text-slate-400 mb-1" for="input-qty">Quantity</label>
+                                    <input type="number" id="input-qty" placeholder="0" min="0"
+                                           class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500 transition-all font-semibold">
+                                </div>
+                                <div>
+                                    <label class="block text-2xs font-bold uppercase tracking-wider text-slate-400 mb-1" for="input-price">Price ($)</label>
+                                    <input type="text" id="input-price" placeholder="0.00"
+                                           class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500 transition-all font-semibold">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-2xs font-bold uppercase tracking-wider text-slate-400 mb-1" for="input-threshold">Low Stock Threshold</label>
+                                <input type="number" id="input-threshold" placeholder="0" min="0"
+                                       class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500 transition-all font-semibold">
+                            </div>
+                        </div>
+
+                        <!-- UPDATE QTY FIELDS -->
+                        <div id="fields-updateQty" class="hidden">
+                            <div>
+                                <label class="block text-2xs font-bold uppercase tracking-wider text-slate-400 mb-1" for="input-delta">Quantity Delta (+/-)</label>
+                                <input type="number" id="input-delta" placeholder="e.g. 50 or -20"
+                                       class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500 transition-all font-semibold">
+                            </div>
+                        </div>
+
+                        <!-- UPDATE EXPIRY FIELDS -->
+                        <div id="fields-updateExp" class="hidden">
+                            <div>
+                                <label class="block text-2xs font-bold uppercase tracking-wider text-slate-400 mb-1" for="input-newExpiry">New Expiry Date (YYYY-MM-DD)</label>
+                                <input type="text" id="input-newExpiry" placeholder="YYYY-MM-DD"
+                                       class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-teal-500 transition-all font-semibold">
+                            </div>
+                        </div>
+
+                        <!-- DELETE ACTIONS EXPLANATORY DRAWER -->
+                        <div id="fields-delete" class="hidden bg-rose-950/20 border border-rose-500/20 rounded-xl p-4 text-xs text-rose-300 leading-normal">
+                            <strong>Caution:</strong> This operation deletes this specific batch folder data from the inventory file permanently. Make sure the Name and Batch values are entered.
+                        </div>
+
+                    </div>
+
+                    <!-- Form Submitter Action Button -->
+                    <div class="p-6 border-t border-slate-800 flex-shrink-0">
+                        <button onclick="handleFormAction()" id="actionSubmitBtn"
+                                class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-teal-900/20 transition-all">
+                            Submit Form
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- JS ENGINE LOGIC -->
+    <script>
+        let currentTab = 'add';
+        let currentFilter = 'all';
+        let fullInventory = [];
+        let isAuthenticated = false;
+
+        // Toast System
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            
+            const toast = document.createElement('div');
+            toast.className = `toast-animate w-full flex items-center space-x-3 p-4 bg-darkCard border rounded-xl shadow-2xl transition-all pointer-events-auto`;
+            
+            // Choose type style
+            if (type === 'success') {
+                toast.classList.add('border-emerald-500/35');
+                toast.innerHTML = `
+                    <div class="text-emerald-400 flex-shrink-0 bg-emerald-500/10 p-1.5 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div class="text-slate-100 text-sm font-semibold flex-1">${message}</div>
+                `;
+            } else if (type === 'error') {
+                toast.classList.add('border-rose-500/35');
+                toast.innerHTML = `
+                    <div class="text-rose-400 flex-shrink-0 bg-rose-500/10 p-1.5 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <div class="text-slate-100 text-sm font-semibold flex-1">${message}</div>
+                `;
+            } else {
+                toast.classList.add('border-indigo-500/35');
+                toast.innerHTML = `
+                    <div class="text-indigo-400 flex-shrink-0 bg-indigo-500/10 p-1.5 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div class="text-slate-100 text-sm font-semibold flex-1">${message}</div>
+                `;
+            }
+
+            container.appendChild(toast);
+
+            // Automatically fade out and remove
+            setTimeout(() => {
+                toast.classList.add('toast-fade-out');
+                setTimeout(() => {
+                    toast.remove();
+                }, 400);
+            }, 3000);
+        }
+
+        // Login Handler
+        async function handleLogin(e) {
+            e.preventDefault();
+            const usernameVal = document.getElementById('username').value;
+            const passwordVal = document.getElementById('password').value;
+            const statusLabel = document.getElementById('loginStatus');
+
+            statusLabel.innerText = "Authenticating...";
+
+            try {
+                const response = await fetch('/api/authenticate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: usernameVal, password: passwordVal })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    isAuthenticated = true;
+                    document.getElementById('loginOverlay').classList.add('hidden');
+                    document.getElementById('appContainer').classList.remove('hidden');
+                    showToast("Signed in successfully as administrator!");
+                    await fetchInventory();
+                } else {
+                    statusLabel.innerText = data.message || "Invalid credentials.";
+                    showToast("Authentication failed", "error");
+                }
+            } catch (err) {
+                statusLabel.innerText = "Connection error. Make sure Python server is running.";
+                showToast("Connection to backend lost", "error");
+            }
+        }
+
+        // View Filtering Control (All/Low Stock/Expired/Reports)
+        function setViewFilter(filter) {
+            currentFilter = filter;
+            
+            // Sidebar buttons style updates
+            ['all', 'lowStock', 'expired', 'reports-expired', 'reports-lowstock'].forEach(f => {
+                const btn = document.getElementById(`viewBtn-${f}`);
+                if (!btn) return;
+                
+                btn.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-left text-sm font-semibold transition-all";
+                if (f === filter) {
+                    btn.classList.add("bg-teal-950/40", "text-teal-400", "border", "border-teal-500/20");
+                } else {
+                    btn.classList.add("hover:bg-slate-900", "text-slate-400", "hover:text-slate-100");
+                }
+            });
+
+            // Page layout panels visibility toggles based on filter selection
+            const isReportView = filter.startsWith('reports-');
+            
+            if (isReportView) {
+                document.getElementById('kpiSection').classList.add('hidden');
+                document.getElementById('tableContainer').classList.add('hidden');
+                document.getElementById('operationsContainer').classList.add('hidden');
+                document.getElementById('searchBarContainer').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('reportsContainer').classList.remove('hidden');
+                
+                const titles = {
+                    'reports-expired': "Expired Stock Reports log",
+                    'reports-lowstock': "Low Stock Reports log"
+                };
+                document.getElementById('dashboardTitle').innerText = titles[filter];
+                document.getElementById('reportsDirectoryTitle').innerText = titles[filter];
+                
+                fetchReportsList();
+            } else {
+                document.getElementById('kpiSection').classList.remove('hidden');
+                document.getElementById('tableContainer').classList.remove('hidden');
+                document.getElementById('operationsContainer').classList.remove('hidden');
+                document.getElementById('searchBarContainer').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('reportsContainer').classList.add('hidden');
+                
+                const titles = {
+                    all: "Inventory Management Dashboard",
+                    lowStock: "Low Stock Inventory Alerts",
+                    expired: "Expired Inventory Items"
+                };
+                document.getElementById('dashboardTitle').innerText = titles[filter];
+                
+                renderTable();
+            }
+        }
+
+        // Action Tab Control (Forms inside Console Operations)
+        function setActionTab(tab) {
+            currentTab = tab;
+            
+            // Tab button styles reset
+            ['add', 'updateQty', 'updateExp', 'delete'].forEach(t => {
+                const btn = document.getElementById(`tabBtn-${t}`);
+                btn.className = "flex-1 py-3 text-center border-b-2 transition-all";
+                if (t === tab) {
+                    btn.classList.add("border-teal-500", "text-teal-400");
+                } else {
+                    btn.classList.add("border-transparent");
+                }
+
+                // Hide fields
+                const fields = document.getElementById(`fields-${t}`);
+                if (fields) {
+                    if (t === tab) fields.classList.remove('hidden');
+                    else fields.classList.add('hidden');
+                }
+            });
+
+            const labels = {
+                add: "Add New Medicine",
+                updateQty: "Update Quantity (Delta)",
+                updateExp: "Modify Expiry Date",
+                delete: "Delete Selected Batch"
+            };
+            document.getElementById('actionSubmitBtn').innerText = labels[tab];
+        }
+
+        // Fetch directory inventory file
+        async function fetchInventory() {
+            try {
+                const response = await fetch('/api/inventory');
+                fullInventory = await response.json();
+                
+                // Compute KPI statistics
+                const totalMeds = fullInventory.length;
+                const today = new Date();
+                
+                let lowStockCount = 0;
+                let expiredCount = 0;
+                let totalValuation = 0;
+
+                fullInventory.forEach(item => {
+                    totalValuation += (item.qty * item.price);
+                    
+                    if (item.qty <= item.threshold) {
+                        lowStockCount++;
+                    }
+
+                    const expDate = new Date(item.expiry);
+                    if (expDate < today) {
+                        expiredCount++;
+                    }
+                });
+
+                // Update cards text
+                document.getElementById('stat-total').innerText = totalMeds;
+                document.getElementById('stat-low').innerText = lowStockCount;
+                document.getElementById('stat-expired').innerText = expiredCount;
+                document.getElementById('stat-valuation').innerText = `$${totalValuation.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                renderTable();
+            } catch (err) {
+                showToast("Failed to fetch inventory directory", "error");
+            }
+        }
+
+        // Reports generation triggering
+        async function handleReportGeneration(cmd) {
+            showToast("Generating report, invoking C++ backend...", "info");
+            
+            try {
+                const response = await fetch('/api/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ args: [cmd] })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast("Report generated successfully!");
+                    // If in report view, refresh the list immediately
+                    if (currentFilter.startsWith('reports-')) {
+                        await fetchReportsList();
+                    }
+                } else {
+                    showToast("Failed to generate report", "error");
+                }
+            } catch (err) {
+                showToast("Error connecting to backend", "error");
+            }
+        }
+
+        // Fetch reports list files matching filter from folder
+        async function fetchReportsList() {
+            const reportType = currentFilter === 'reports-expired' ? 'expired' : 'lowstock';
+            const listBody = document.getElementById('reportsListBody');
+            const emptyState = document.getElementById('emptyReportsState');
+            listBody.innerHTML = '';
+            
+            try {
+                const response = await fetch(`/api/reports?type=${reportType}`);
+                const reports = await response.json();
+
+                if (reports.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+                
+                emptyState.classList.add('hidden');
+
+                reports.forEach(report => {
+                    const row = document.createElement('div');
+                    row.className = "flex items-center justify-between p-4 bg-slate-900 border border-slate-800 rounded-xl hover:border-teal-500/25 transition-all";
+                    row.innerHTML = `
+                        <div class="flex items-center space-x-3.5">
+                            <div class="p-2.5 bg-slate-950 text-indigo-400 rounded-lg border border-slate-800">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-white tracking-wide truncate max-w-sm sm:max-w-md">${report.filename}</h4>
+                                <p class="text-2xs text-slate-500 font-semibold uppercase mt-0.5 tracking-wider">Generated at: ${report.timestamp}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2.5">
+                            <button onclick="viewReportContent('${report.filename}')"
+                                    class="text-xs bg-slate-950 hover:bg-slate-800 text-teal-400 font-bold px-4 py-2 border border-slate-800 hover:border-teal-500/25 rounded-lg transition-all">
+                                View
+                            </button>
+                            <button onclick="deleteReportFile('${report.filename}')"
+                                    class="text-xs bg-rose-950/25 hover:bg-rose-900/30 text-rose-400 font-bold px-4 py-2 border border-rose-500/20 hover:border-rose-500/40 rounded-lg transition-all">
+                                Delete
+                            </button>
+                        </div>
+                    `;
+                    listBody.appendChild(row);
+                });
+            } catch (err) {
+                showToast("Failed to retrieve reports list", "error");
+            }
+        }
+
+        // View report modal display
+        async function viewReportContent(filename) {
+            try {
+                const response = await fetch(`/api/reports/view?file=${filename}`);
+                const data = await response.json();
+                
+                if (data.content) {
+                    document.getElementById('modalReportTitle').innerText = `Report Archive: ${filename}`;
+                    document.getElementById('modalReportContent').innerText = data.content;
+                    document.getElementById('reportModal').classList.remove('hidden');
+                } else {
+                    showToast("Could not display file contents", "error");
+                }
+            } catch (err) {
+                showToast("Connection to server failed", "error");
+            }
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+        }
+
+        // Delete report locally
+        async function deleteReportFile(filename) {
+            if (!confirm(`Are you sure you want to permanently delete this report file: "${filename}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/reports/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file: filename })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast("Report file deleted successfully!");
+                    await fetchReportsList();
+                } else {
+                    showToast("Failed to delete file", "error");
+                }
+            } catch (err) {
+                showToast("Error connecting to server", "error");
+            }
+        }
+
+        // Search Input Filter
+        function handleSearch() {
+            renderTable();
+        }
+
+        // Render inventory stock entries inside HTML Table body
+        function renderTable() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const tbody = document.getElementById('inventoryTableBody');
+            const emptyState = document.getElementById('emptyTableState');
+            tbody.innerHTML = '';
+            
+            const today = new Date();
+            let visibleCount = 0;
+
+            fullInventory.forEach(item => {
+                const matchesSearch = item.name.toLowerCase().includes(query);
+                
+                const expDate = new Date(item.expiry);
+                const isExpired = expDate < today;
+                const isLowStock = item.qty <= item.threshold;
+
+                let matchesFilter = true;
+                if (currentFilter === 'lowStock') matchesFilter = isLowStock;
+                else if (currentFilter === 'expired') matchesFilter = isExpired;
+
+                if (matchesSearch && matchesFilter) {
+                    visibleCount++;
+                    
+                    // Determine badges
+                    let statusBadge = '';
+                    if (isExpired) {
+                        statusBadge = '<span class="px-2.5 py-0.5 rounded text-xs font-semibold bg-rose-950/40 text-rose-400 border border-rose-500/10">Expired</span>';
+                    } else if (item.qty <= 0) {
+                        statusBadge = '<span class="px-2.5 py-0.5 rounded text-xs font-semibold bg-red-950/40 text-red-400 border border-red-500/10">Out of Stock</span>';
+                    } else if (isLowStock) {
+                        statusBadge = '<span class="px-2.5 py-0.5 rounded text-xs font-semibold bg-amber-950/40 text-amber-400 border border-amber-500/10">Low Stock</span>';
+                    } else {
+                        statusBadge = '<span class="px-2.5 py-0.5 rounded text-xs font-semibold bg-emerald-950/40 text-emerald-400 border border-emerald-500/10">Healthy</span>';
+                    }
+
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-slate-900/50 transition-all border-b border-slate-900";
+                    row.innerHTML = `
+                        <td class="py-3.5 px-6 font-semibold text-white cursor-pointer hover:text-teal-400 transition-colors" onclick="selectRow('${item.name}', '${item.batch}')">${item.name}</td>
+                        <td class="py-3.5 px-6 code-font text-xs text-slate-400">${item.batch}</td>
+                        <td class="py-3.5 px-6 text-slate-400">${item.expiry}</td>
+                        <td class="py-3.5 px-6 text-right font-semibold ${isLowStock ? 'text-amber-400' : 'text-slate-300'}">${item.qty}</td>
+                        <td class="py-3.5 px-6 text-right text-slate-300 font-semibold">$${item.price.toFixed(2)}</td>
+                        <td class="py-3.5 px-6 text-right text-slate-400">${item.threshold}</td>
+                        <td class="py-3.5 px-6">${statusBadge}</td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            });
+
+            if (visibleCount === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+        }
+
+        // Fill form fields automatically when user clicks table row
+        function selectRow(name, batch) {
+            document.getElementById('input-name').value = name;
+            document.getElementById('input-batch').value = batch;
+            
+            const item = fullInventory.find(i => i.name === name && i.batch === batch);
+            if (item) {
+                document.getElementById('input-expiry').value = item.expiry;
+                document.getElementById('input-qty').value = item.qty;
+                document.getElementById('input-price').value = item.price;
+                document.getElementById('input-threshold').value = item.threshold;
+                document.getElementById('input-newExpiry').value = item.expiry;
+                showToast(`Selected "${name}" (Batch: ${batch})`);
+            }
+        }
+
+        // Execute Command Helper
+        async function executeCommand(args, successMessage = 'Action completed successfully') {
+            try {
+                const response = await fetch('/api/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ args })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast(successMessage);
+                    
+                    // Trigger live checks if thresholds alert apply
+                    if (args[0] === 'add' || args[0] === 'update_qty') {
+                        checkThresholdAlert(args[1], args[2]);
+                    }
+
+                    // Reload table
+                    await fetchInventory();
+                } else {
+                    showToast("C++ binary operation returned error status", "error");
+                }
+            } catch (err) {
+                showToast("Connection to backend lost", "error");
+            }
+        }
+
+        // Check stock thresholds on client side for alert popup
+        function checkThresholdAlert(name, batch) {
+            const item = fullInventory.find(i => i.name === name && i.batch === batch);
+            if (item && item.qty <= item.threshold) {
+                alert(`Warning: stock threshold reached for ${name} (Batch: ${batch}). Please place purchase order.`);
+            }
+        }
+
+        // Submit form
+        function handleFormAction() {
+            const name = document.getElementById('input-name').value.trim();
+            const batch = document.getElementById('input-batch').value.trim();
+
+            if (!name) {
+                showToast("Medicine Name field is required!", "error");
+                return;
+            }
+
+            if (currentTab === 'add') {
+                const expiry = document.getElementById('input-expiry').value.trim();
+                const qty = document.getElementById('input-qty').value;
+                const price = document.getElementById('input-price').value.trim();
+                const threshold = document.getElementById('input-threshold').value;
+
+                if (!batch || !expiry || !qty || !price || !threshold) {
+                    showToast("All fields are required to add medicine.", "error");
+                    return;
+                }
+
+                executeCommand(['add', name, batch, expiry, qty, price, threshold], `Medicine "${name}" added to database`);
+                clearFormFields();
+
+            } else if (currentTab === 'updateQty') {
+                const delta = document.getElementById('input-delta').value;
+                if (!batch || !delta) {
+                    showToast("Name, Batch, and Delta Quantity are required.", "error");
+                    return;
+                }
+                executeCommand(['update_qty', name, batch, delta], `Quantity adjusted for "${name}"`);
+                document.getElementById('input-delta').value = '';
+
+            } else if (currentTab === 'updateExp') {
+                const newExp = document.getElementById('input-newExpiry').value.trim();
+                if (!batch || !newExp) {
+                    showToast("Name, Batch, and New Expiry date are required.", "error");
+                    return;
+                }
+                executeCommand(['update_expiry', name, batch, newExp], `Expiry date modified for "${name}"`);
+                document.getElementById('input-newExpiry').value = '';
+
+            } else if (currentTab === 'delete') {
+                if (!batch) {
+                    showToast("Batch ID is required for deletion.", "error");
+                    return;
+                }
+                if (confirm(`Are you sure you want to delete medicine: ${name} (Batch: ${batch})?`)) {
+                    executeCommand(['delete_medicine', name, batch], `Batch "${batch}" of "${name}" deleted`);
+                    clearFormFields();
+                }
+            }
+        }
+
+        function clearFormFields() {
+            document.getElementById('input-name').value = '';
+            document.getElementById('input-batch').value = '';
+            document.getElementById('input-expiry').value = '';
+            document.getElementById('input-qty').value = '';
+            document.getElementById('input-price').value = '';
+            document.getElementById('input-threshold').value = '';
+        }
+
+        // Exit handler
+        function handleExit() {
+            if (confirm("Are you sure you want to shut down the server and exit?")) {
+                window.close();
+            }
+        }
+    </script>
+</body>
+</html>
