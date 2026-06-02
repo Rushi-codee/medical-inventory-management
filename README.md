@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/Build-Passing-brightgreen.svg" alt="Build Status" />
   <img src="https://img.shields.io/badge/Python-3.8%2B-blue.svg" alt="Python Version" />
   <img src="https://img.shields.io/badge/C%2B%2B-17-orange.svg" alt="C++ Standard" />
-  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License" />
+
 </p>
 
 ---
