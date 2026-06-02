@@ -25,6 +25,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- jsPDF Library for report downloading -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -117,7 +119,11 @@
             <div class="flex-1 p-6 overflow-auto bg-darkBg border-b border-slate-800">
                 <pre id="modalReportContent" class="code-font text-emerald-400 text-xs sm:text-sm whitespace-pre overflow-x-auto leading-relaxed"></pre>
             </div>
-            <div class="px-6 py-4 flex justify-end flex-shrink-0">
+            <div class="px-6 py-4 flex justify-between flex-shrink-0">
+                <button id="modalDownloadBtn" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold py-2 px-6 rounded-xl transition-all flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span>Download PDF</span>
+                </button>
                 <button onclick="closeReportModal()" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 px-6 rounded-xl transition-all">
                     Close Preview
                 </button>
@@ -459,6 +465,7 @@
         let currentFilter = 'all';
         let fullInventory = [];
         let isAuthenticated = false;
+        const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:8080' : '';
 
         // Toast System
         function showToast(message, type = 'success') {
@@ -515,7 +522,7 @@
             statusLabel.innerText = "Authenticating...";
 
             try {
-                const response = await fetch('/api/authenticate', {
+                const response = await fetch(API_BASE + '/api/authenticate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: usernameVal, password: passwordVal })
@@ -625,7 +632,7 @@
         // Fetch directory inventory file
         async function fetchInventory() {
             try {
-                const response = await fetch('/api/inventory');
+                const response = await fetch(API_BASE + '/api/inventory');
                 fullInventory = await response.json();
                 
                 // Compute KPI statistics
@@ -666,7 +673,7 @@
             showToast("Generating report, invoking C++ backend...", "info");
             
             try {
-                const response = await fetch('/api/execute', {
+                const response = await fetch(API_BASE + '/api/execute', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ args: [cmd] })
@@ -695,7 +702,7 @@
             listBody.innerHTML = '';
             
             try {
-                const response = await fetch(`/api/reports?type=${reportType}`);
+                const response = await fetch(API_BASE + `/api/reports?type=${reportType}`);
                 const reports = await response.json();
 
                 if (reports.length === 0) {
@@ -723,6 +730,11 @@
                                     class="text-xs bg-slate-950 hover:bg-slate-800 text-teal-400 font-bold px-4 py-2 border border-slate-800 hover:border-teal-500/25 rounded-lg transition-all">
                                 View
                             </button>
+                            <button onclick="downloadReportPDF('${report.filename}')"
+                                    class="text-xs bg-slate-950 hover:bg-slate-800 text-indigo-400 font-bold px-4 py-2 border border-slate-800 hover:border-indigo-500/25 rounded-lg transition-all flex items-center space-x-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                <span>PDF</span>
+                            </button>
                             <button onclick="deleteReportFile('${report.filename}')"
                                     class="text-xs bg-rose-950/25 hover:bg-rose-900/30 text-rose-400 font-bold px-4 py-2 border border-rose-500/20 hover:border-rose-500/40 rounded-lg transition-all">
                                 Delete
@@ -737,14 +749,90 @@
         }
 
         // View report modal display
+        // Download report as PDF
+        async function downloadReportPDF(filename) {
+            try {
+                showToast("Generating PDF report...", "info");
+                const response = await fetch(API_BASE + `/api/reports/view?file=${filename}`);
+                const data = await response.json();
+                
+                if (!data.content) {
+                    showToast("Could not retrieve report content", "error");
+                    return;
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                // Set standard monospace font (Courier)
+                doc.setFont("Courier", "normal");
+                doc.setFontSize(10);
+
+                // Split text into lines that fit the page width (A4 is 210mm wide, so 190mm printable area)
+                const textLines = doc.splitTextToSize(data.content, 190);
+                
+                let y = 15;
+                const pageHeight = doc.internal.pageSize.height; // 297mm
+                const bottomMargin = 15;
+                
+                // Add header
+                doc.setFont("Courier", "bold");
+                doc.setFontSize(12);
+                doc.text("MEDICAL INVENTORY MANAGEMENT SYSTEM", 10, y);
+                y += 6;
+                doc.setFontSize(10);
+                doc.setFont("Courier", "normal");
+                doc.text(`File: ${filename}`, 10, y);
+                y += 8;
+                
+                // Draw separator line
+                doc.line(10, y, 200, y);
+                y += 8;
+
+                // Loop through lines and print
+                for (let i = 0; i < textLines.length; i++) {
+                    if (y > pageHeight - bottomMargin) {
+                        doc.addPage();
+                        y = 15;
+                        doc.setFont("Courier", "bold");
+                        doc.text("MEDICAL INVENTORY MANAGEMENT SYSTEM (Cont.)", 10, y);
+                        y += 6;
+                        doc.setFont("Courier", "normal");
+                        doc.line(10, y, 200, y);
+                        y += 8;
+                    }
+                    doc.text(textLines[i], 10, y);
+                    y += 5.5; // Line height
+                }
+
+                // Save PDF
+                const pdfFilename = filename.replace('.txt', '.pdf');
+                doc.save(pdfFilename);
+                showToast("PDF report downloaded successfully!");
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to generate PDF", "error");
+            }
+        }
+
+        // View report modal display
         async function viewReportContent(filename) {
             try {
-                const response = await fetch(`/api/reports/view?file=${filename}`);
+                const response = await fetch(API_BASE + `/api/reports/view?file=${filename}`);
                 const data = await response.json();
                 
                 if (data.content) {
                     document.getElementById('modalReportTitle').innerText = `Report Archive: ${filename}`;
                     document.getElementById('modalReportContent').innerText = data.content;
+                    
+                    // Setup download button in modal
+                    const dlBtn = document.getElementById('modalDownloadBtn');
+                    dlBtn.onclick = () => downloadReportPDF(filename);
+                    
                     document.getElementById('reportModal').classList.remove('hidden');
                 } else {
                     showToast("Could not display file contents", "error");
@@ -765,7 +853,7 @@
             }
 
             try {
-                const response = await fetch('/api/reports/delete', {
+                const response = await fetch(API_BASE + '/api/reports/delete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ file: filename })
@@ -865,7 +953,7 @@
         // Execute Command Helper
         async function executeCommand(args, successMessage = 'Action completed successfully') {
             try {
-                const response = await fetch('/api/execute', {
+                const response = await fetch(API_BASE + '/api/execute', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ args })
