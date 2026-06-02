@@ -1,0 +1,25 @@
+name,batch,expiry,qty,price,threshold
+Paracetamol,B123,2026-05-10,50,12.5,10
+Aspirin,B124,2027-03-15,14,8.5,15
+Ibuprofen,C001,2026-08-20,120,15,25
+Metformin,E003,2028-01-05,200,5,50
+Omeprazole,F004,2026-07-12,90,18,10
+Simvastatin,G005,2027-09-18,60,12,12
+Prednisone,J008,2026-12-08,30,7.5,8
+Warfarin,K009,2027-06-25,55,22,10
+Furosemide,L010,2026-02-28,95,6,20
+Hydrochlorothiazide,M011,2028-05-03,130,4.5,35
+Atorvastatin,N012,2027-11-19,70,14,15
+Losartan,O013,2026-09-10,105,11,25
+Gabapentin,Q015,2027-04-17,85,13.5,18
+Sertraline,R016,2026-11-23,50,19,10
+Fluoxetine,S017,2028-03-09,75,17.5,15
+Diazepam,T018,2027-07-30,45,8,9
+Lorazepam,U019,2026-06-14,60,12.5,12
+Alprazolam,V020,2030-01-18,40,15,8
+Paracetamol,V020,2027-01-12,2,200,3
+dolo 600,XZ120,2027-06-15,40,4.3,20
+crosine,x200,2027-03-06,30,5.9,5
+Respira,ZXB20,2023-09-06,20,10,5
+Metformin,ZX120,2028-05-22,40,6,10
+Calpol,SS45,2028-06-03,50,5,10

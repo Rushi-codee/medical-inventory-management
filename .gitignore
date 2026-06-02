@@ -1,0 +1,26 @@
+# Compiled binaries and executables
+*.exe
+*.o
+*.obj
+*.out
+
+# Python cache and environment files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+
+# Local text reports and sensitive authentication configuration
+auth.txt
+expired report_*.txt
+expired_report.txt
+low_stock_report.txt
+lowstockreport_*.txt
+*.log
