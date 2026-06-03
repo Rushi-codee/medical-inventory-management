@@ -171,6 +171,29 @@
         </div>
     </div>
 
+    <!-- LOGOUT MODAL OVERLAY -->
+    <div id="logoutModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+        <div class="w-full max-w-sm bg-darkCard border border-slate-800 rounded-2xl shadow-2xl p-6 mx-4 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-rose-500/10 mb-4">
+                <svg class="h-6 w-6 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 class="text-lg leading-6 font-bold text-white mb-2" id="modal-title">Logout Confirmation</h3>
+            <div class="mt-2">
+                <p class="text-sm text-slate-400">Are you sure you want to logout?</p>
+            </div>
+            <div class="mt-6 flex justify-center space-x-4">
+                <button onclick="closeLogoutModal()" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded-xl transition-all">
+                    Cancel
+                </button>
+                <button onclick="handleLogout()" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2 px-4 rounded-xl shadow-lg shadow-rose-900/30 transition-all">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MAIN APP SCREEN (HIDDEN BY DEFAULT) -->
     <div id="appContainer" class="hidden flex-1 flex overflow-hidden">
 
@@ -276,14 +299,14 @@
 
             <!-- Bottom Exit -->
             <div class="p-4 border-t border-slate-800">
-                <button onclick="handleExit()"
+                <button onclick="showLogoutModal()"
                     class="w-full flex items-center justify-center space-x-2 px-3 py-2.5 rounded-xl text-sm font-semibold bg-rose-950/30 hover:bg-rose-900/40 text-rose-400 border border-rose-500/25 hover:border-rose-500/40 transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
                         </path>
                     </svg>
-                    <span>Close Portal</span>
+                    <span>Logout</span>
                 </button>
             </div>
         </aside>
@@ -1146,11 +1169,23 @@
             document.getElementById('input-threshold').value = '';
         }
 
-        // Exit handler
-        function handleExit() {
-            if (confirm("Are you sure you want to shut down the server and exit?")) {
-                window.close();
-            }
+        // Logout handler
+        function showLogoutModal() {
+            document.getElementById('logoutModal').classList.remove('hidden');
+        }
+
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').classList.add('hidden');
+        }
+
+        function handleLogout() {
+            closeLogoutModal();
+            isAuthenticated = false;
+            document.getElementById('appContainer').classList.add('hidden');
+            document.getElementById('loginOverlay').classList.remove('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            showToast("Logged out successfully");
         }
     </script>
 </body>
