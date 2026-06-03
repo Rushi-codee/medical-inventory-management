@@ -2,8 +2,8 @@
 
 MIMS is a robust, hybrid-architecture Medical Inventory Management System. It combines the high-performance data processing of a **C++ backend** with the modern, responsive user interface of a **web-based frontend** (HTML/Tailwind CSS/JS) served by a **Python backend server**.
 
-![Screenshot: Login Screen](replace_with_login_screenshot.png)
-*(Screenshot of the Admin Login Screen)*
+<img width="1907" height="962" alt="image" src="https://github.com/user-attachments/assets/5b6644a2-f748-4ca6-8eeb-87d310d763a4" />
+
 
 ## Features
 
@@ -18,8 +18,8 @@ MIMS is a robust, hybrid-architecture Medical Inventory Management System. It co
   - Delete expired or discontinued batches.
 - **Hybrid Architecture**: Fast C++ executable for business logic and file-based data storage, linked to a beautiful Tailwind CSS web interface via a Python API bridge.
 
-![Screenshot: Main Dashboard](replace_with_main_dashboard_screenshot.png)
-*(Screenshot of the Main Dashboard showing KPIs and Stock Directory)*
+<img width="1918" height="952" alt="image" src="https://github.com/user-attachments/assets/2ed4e58e-e5a2-4f89-ad01-15716b5fcba3" />
+
 
 ## Technology Stack
 
@@ -42,9 +42,8 @@ MIMS is a robust, hybrid-architecture Medical Inventory Management System. It co
 │       └── index.html     # Main frontend user interface
 └── README.md              # This documentation file
 ```
+<img width="397" height="692" alt="image" src="https://github.com/user-attachments/assets/dee7766b-17c3-4e46-ae37-44cffa140c6b" />
 
-![Screenshot: Adding a Medicine](replace_with_add_medicine_screenshot.png)
-*(Screenshot of the 'Add New Medicine' operation panel)*
 
 ## Prerequisites
 
@@ -74,8 +73,9 @@ To run this application locally, you will need:
 3. **Access the Web Portal**:
    Once the server starts, open your web browser and navigate to the address provided in your terminal (usually `http://localhost:8080`).
 
-![Screenshot: View/Download Report](replace_with_report_modal_screenshot.png)
-*(Screenshot showing the Report Preview Modal and PDF Download option)*
+<img width="1902" height="893" alt="image" src="https://github.com/user-attachments/assets/e3496bd5-ee99-4aee-b8ca-cf7a74af607c" />
+<img width="902" height="367" alt="image" src="https://github.com/user-attachments/assets/50b5c948-3691-4a48-be06-6fcb0bde0248" />
+
 
 ## Usage
 
@@ -84,5 +84,5 @@ To run this application locally, you will need:
 3. **Manage Stock**: Use the right-hand panel ("Console Operations") to Add, Update Quantity, Modify Expiry, or Delete records. 
 4. **Generate Reports**: Click on "Generate Expired Report" or "Generate Low Stock Report" in the sidebar, then navigate to the "Report Directories" to view or download them.
 
-![Screenshot: Reports Directory](replace_with_reports_directory_screenshot.png)
-*(Screenshot of the Generated Reports Log)*
+<img width="1916" height="900" alt="image" src="https://github.com/user-attachments/assets/95ef9929-dccb-48e2-9fb8-ff3493751c6e" />
+
